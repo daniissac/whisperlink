@@ -1,7 +1,7 @@
 {
     "name": "WhisperLink",
     "short_name": "WhisperLink",
-    "start_url": "/",
+    "start_url": "/whisperlink/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
