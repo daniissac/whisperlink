@@ -1,9 +1,12 @@
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
+import icon from './icon.svg';
+
 
 let peerConnection;
 let dataChannel;
 
+const appIcon = document.createElement('img');
 const connectionPage = document.getElementById('connection-page');
 const chatPage = document.getElementById('chat-page');
 const generateQRButton = document.getElementById('generate-qr');
@@ -13,6 +16,11 @@ const qrVideo = document.getElementById('qr-video');
 const messagesDiv = document.getElementById('messages');
 const messageInput = document.getElementById('message-input');
 const sendMessageButton = document.getElementById('send-message');
+
+appIcon.src = icon;
+appIcon.alt = 'WhisperLink';
+document.body.appendChild(appIcon)
+
 
 generateQRButton.addEventListener('click', generateQRCode);
 scanQRButton.addEventListener('click', startQRScanner);

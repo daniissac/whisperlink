@@ -17,11 +17,17 @@ module.exports = {
             patterns: [
                 { from: 'src/manifest.json', to: 'manifest.json' },
                 { from: 'src/.nojekyll', to: '.nojekyll' },
-                // Add this line if you have an icon.png file
-                // { from: 'src/icon.png', to: 'icon.png' },
-            ],
+                { from: 'src/icon.svg', to: 'icon.svg' },            ],
         }),
     ],
+    module: {
+        rules: [
+            {
+                test: /\.svg$/,
+                use: ['file-loader']
+            }
+        ]
+    },
     devServer: {
         static: {
             directory: path.join(__dirname, 'dist'),
