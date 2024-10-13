@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhisperLink</title>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div id="app">
+        <h1>WhisperLink</h1>
+        <div id="connection-page">
+            <button id="generate-qr">Generate QR Code</button>
+            <div id="qr-code"></div>
+            <button id="scan-qr">Scan QR Code</button>
+            <video id="qr-video" style="display: none;"></video>
+        </div>
+        <div id="chat-page" style="display: none;">
+            <div id="messages"></div>
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-message">Send</button>
+        </div>
+    </div>
+</body>
+</html>
