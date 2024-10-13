@@ -1,15 +1,13 @@
+import './styles.css';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
-import icon from './icon.svg';
 
-
+// ... rest of your JavaScript code
 let peerConnection;
 let dataChannel;
 
-const appIcon = document.createElement('img');
 const connectionPage = document.getElementById('connection-page');
 const chatPage = document.getElementById('chat-page');
-const generateQRButton = document.getElementById('generate-qr');
 const scanQRButton = document.getElementById('scan-qr');
 const qrCodeDiv = document.getElementById('qr-code');
 const qrVideo = document.getElementById('qr-video');
@@ -17,19 +15,16 @@ const messagesDiv = document.getElementById('messages');
 const messageInput = document.getElementById('message-input');
 const sendMessageButton = document.getElementById('send-message');
 
-appIcon.src = icon;
-appIcon.alt = 'WhisperLink';
-document.body.appendChild(appIcon)
-
-
-generateQRButton.addEventListener('click', generateQRCode);
 scanQRButton.addEventListener('click', startQRScanner);
 sendMessageButton.addEventListener('click', sendMessage);
+
+// Generate QR code on page load
+window.addEventListener('load', generateQRCode);
 
 async function generateQRCode() {
     const offer = await createOffer();
     const qrData = JSON.stringify(offer);
-    QRCode.toCanvas(qrCodeDiv, qrData, { width: 300 }, (error) => {
+    QRCode.toCanvas(qrCodeDiv, qrData, { width: 200, height: 200 }, (error) => {
         if (error) console.error(error);
     });
 }

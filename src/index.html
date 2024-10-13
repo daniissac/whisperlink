@@ -7,20 +7,22 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#4a90e2">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app">
         <h1>WhisperLink</h1>
         <div id="connection-page">
-            <button id="generate-qr">Generate QR Code</button>
             <div id="qr-code"></div>
             <button id="scan-qr">Scan QR Code</button>
             <video id="qr-video" style="display: none;"></video>
         </div>
         <div id="chat-page" style="display: none;">
             <div id="messages"></div>
-            <input type="text" id="message-input" placeholder="Type your message...">
-            <button id="send-message">Send</button>
+            <div style="display: flex; width: 100%;">
+                <input type="text" id="message-input" placeholder="Type your message...">
+                <button id="send-message">Send</button>
+            </div>
         </div>
     </div>
 </body>
