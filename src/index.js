@@ -2,7 +2,6 @@ import './styles.css';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 
-// ... rest of your JavaScript code
 let peerConnection;
 let dataChannel;
 
