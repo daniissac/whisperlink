@@ -1,7 +1,6 @@
 import './styles.css';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
-
 let peerConnection;
 let dataChannel;
 
@@ -14,32 +13,65 @@ const messagesDiv = document.getElementById('messages');
 const messageInput = document.getElementById('message-input');
 const sendMessageButton = document.getElementById('send-message');
 
-scanQRButton.addEventListener('click', startQRScanner);
+let isScanning = false;
+
+scanQRButton.addEventListener('click', toggleQRScanner);
 sendMessageButton.addEventListener('click', sendMessage);
 
-// Generate QR code on page load
-window.addEventListener('load', generateQRCode);
+window.addEventListener('load', () => {
+    console.log('Page loaded, generating QR code...');
+    generateQRCode();
+});
 
 async function generateQRCode() {
+    console.log('Generating QR code...');
     const offer = await createOffer();
+    console.log('Offer created:', offer);
+    if (!offer) {
+        console.error('Failed to create offer');
+        qrCodeDiv.textContent = 'Failed to create offer';
+        return;
+    }
     const qrData = JSON.stringify(offer);
-    QRCode.toCanvas(qrCodeDiv, qrData, { width: 200, height: 200 }, (error) => {
-        if (error) console.error(error);
-    });
+    try {
+        const canvas = await QRCode.toCanvas(qrData, { width: 200, height: 200 });
+        console.log('QR code generated');
+        qrCodeDiv.innerHTML = ''; // Clear any existing content
+        qrCodeDiv.appendChild(canvas);
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        qrCodeDiv.textContent = 'Error generating QR code';
+    }
+}
+async function createOffer() {
+    try {
+        peerConnection = new RTCPeerConnection();
+        dataChannel = peerConnection.createDataChannel('chat');
+        setupDataChannel();
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        return { type: 'offer', sdp: offer.sdp };
+    } catch (error) {
+        console.error('Error creating offer:', error);
+        return null;
+    }
 }
 
-async function createOffer() {
-    peerConnection = new RTCPeerConnection();
-    dataChannel = peerConnection.createDataChannel('chat');
-    setupDataChannel();
-
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    return { type: 'offer', sdp: offer.sdp };
+function toggleQRScanner() {
+    if (isScanning) {
+        stopQRScanner();
+    } else {
+        startQRScanner();
+    }
 }
 
 function startQRScanner() {
+    isScanning = true;
+    qrCodeDiv.style.display = 'none';
     qrVideo.style.display = 'block';
+    scanQRButton.textContent = 'Cancel Scan';
+    
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         .then(stream => {
             qrVideo.srcObject = stream;
@@ -48,10 +80,24 @@ function startQRScanner() {
         })
         .catch(error => {
             console.error('Error accessing camera:', error);
+            stopQRScanner();
         });
 }
 
+function stopQRScanner() {
+    isScanning = false;
+    qrCodeDiv.style.display = 'block';
+    qrVideo.style.display = 'none';
+    scanQRButton.textContent = 'Scan QR Code';
+    
+    if (qrVideo.srcObject) {
+        qrVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+}
+
 function scanQRCode() {
+    if (!isScanning) return;
+
     const canvas = document.createElement('canvas');
     canvas.width = qrVideo.videoWidth;
     canvas.height = qrVideo.videoHeight;
@@ -60,14 +106,12 @@ function scanQRCode() {
     const code = jsQR(imageData.data, imageData.width, imageData.height);
 
     if (code) {
-        qrVideo.srcObject.getTracks().forEach(track => track.stop());
-        qrVideo.style.display = 'none';
+        stopQRScanner();
         handleScannedData(code.data);
     } else {
         requestAnimationFrame(scanQRCode);
     }
 }
-
 async function handleScannedData(data) {
     const { type, sdp } = JSON.parse(data);
     if (type === 'offer') {
