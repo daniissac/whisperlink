@@ -1,11 +1,12 @@
 import './styles.css';
-const QRCode = require('qrcode');
-const jsQR = require('jsqr');
+import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 
 let peerConnection;
 let dataChannel;
+let isScanning = false;
 
-const uiElements = {
+const UI = {
   connectionPage: document.getElementById('connection-page'),
   chatPage: document.getElementById('chat-page'),
   scanQRButton: document.getElementById('scan-qr'),
@@ -16,34 +17,25 @@ const uiElements = {
   sendMessageButton: document.getElementById('send-message')
 };
 
-let isScanning = false;
-
-uiElements.scanQRButton.addEventListener('click', toggleQRScanner);
-uiElements.sendMessageButton.addEventListener('click', sendMessage);
-
-window.addEventListener('load', () => {
-  console.log(`Page loaded, generating QR code...`);
+function initializeApp() {
+  UI.scanQRButton.addEventListener('click', toggleQRScanner);
+  UI.sendMessageButton.addEventListener('click', sendMessage);
   generateQRCode();
-});
+}
 
 async function generateQRCode() {
   try {
-    console.log('Generating QR code...');
     const offer = await createOffer();
-    console.log('Offer created:', offer);
     if (!offer) {
-      console.error('Failed to create offer');
-      uiElements.qrCodeDiv.textContent = 'Failed to create offer';
-      return;
+      throw new Error('Failed to create offer');
     }
     const qrData = JSON.stringify(offer);
     const canvas = await QRCode.toCanvas(qrData, { width: 200, height: 200 });
-    console.log('QR code generated');
-    uiElements.qrCodeDiv.innerHTML = ''; // Clear any existing content
-    uiElements.qrCodeDiv.appendChild(canvas);
+    UI.qrCodeDiv.innerHTML = '';
+    UI.qrCodeDiv.appendChild(canvas);
   } catch (error) {
     console.error('Error generating QR code:', error);
-    uiElements.qrCodeDiv.textContent = 'Error generating QR code';
+    UI.qrCodeDiv.textContent = 'Error generating QR code';
   }
 }
 
@@ -62,50 +54,46 @@ async function createOffer() {
   }
 }
 
-const toggleQRScanner = () => {
-  if (isScanning) {
-    stopQRScanner();
-  } else {
-    startQRScanner();
-  }
-};
+function toggleQRScanner() {
+  isScanning ? stopQRScanner() : startQRScanner();
+}
 
-const startQRScanner = () => {
+function startQRScanner() {
   isScanning = true;
-  uiElements.qrCodeDiv.style.display = 'none';
-  uiElements.qrVideo.style.display = 'block';
-  uiElements.scanQRButton.textContent = 'Cancel Scan';
+  UI.qrCodeDiv.style.display = 'none';
+  UI.qrVideo.style.display = 'block';
+  UI.scanQRButton.textContent = 'Cancel Scan';
   
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(stream => {
-      uiElements.qrVideo.srcObject = stream;
-      uiElements.qrVideo.play();
+      UI.qrVideo.srcObject = stream;
+      UI.qrVideo.play();
       requestAnimationFrame(scanQRCode);
     })
     .catch(error => {
       console.error('Error accessing camera:', error);
       stopQRScanner();
     });
-};
+}
 
-const stopQRScanner = () => {
+function stopQRScanner() {
   isScanning = false;
-  uiElements.qrCodeDiv.style.display = 'block';
-  uiElements.qrVideo.style.display = 'none';
-  uiElements.scanQRButton.textContent = 'Scan QR Code';
+  UI.qrCodeDiv.style.display = 'block';
+  UI.qrVideo.style.display = 'none';
+  UI.scanQRButton.textContent = 'Scan QR Code';
   
-  if (uiElements.qrVideo.srcObject) {
-    uiElements.qrVideo.srcObject.getTracks().forEach(track => track.stop());
+  if (UI.qrVideo.srcObject) {
+    UI.qrVideo.srcObject.getTracks().forEach(track => track.stop());
   }
-};
+}
 
-const scanQRCode = () => {
+function scanQRCode() {
   if (!isScanning) return;
 
   const canvas = document.createElement('canvas');
-  canvas.width = uiElements.qrVideo.videoWidth;
-  canvas.height = uiElements.qrVideo.videoHeight;
-  canvas.getContext('2d').drawImage(uiElements.qrVideo, 0, 0, canvas.width, canvas.height);
+  canvas.width = UI.qrVideo.videoWidth;
+  canvas.height = UI.qrVideo.videoHeight;
+  canvas.getContext('2d').drawImage(UI.qrVideo, 0, 0, canvas.width, canvas.height);
   const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
   const code = jsQR(imageData.data, imageData.width, imageData.height);
 
@@ -115,16 +103,16 @@ const scanQRCode = () => {
   } else {
     requestAnimationFrame(scanQRCode);
   }
-};
+}
 
-const handleScannedData = async (data) => {
+async function handleScannedData(data) {
   const { type, sdp } = JSON.parse(data);
   if (type === 'offer') {
     await handleOffer(sdp);
   }
-};
+}
 
-const handleOffer = async (offerSdp) => {
+async function handleOffer(offerSdp) {
   try {
     peerConnection = new RTCPeerConnection();
     peerConnection.ondatachannel = (event) => {
@@ -137,45 +125,47 @@ const handleOffer = async (offerSdp) => {
     await peerConnection.setLocalDescription(answer);
 
     const qrData = JSON.stringify({ type: 'answer', sdp: answer.sdp });
-    await QRCode.toCanvas(uiElements.qrCodeDiv, qrData, { width: 300 });
+    await QRCode.toCanvas(UI.qrCodeDiv, qrData, { width: 300 });
   } catch (error) {
     console.error('Error handling offer:', error);
   }
-};
+}
 
-const setupDataChannel = () => {
+function setupDataChannel() {
   dataChannel.onopen = () => {
     console.log('Data channel is open');
-    uiElements.connectionPage.style.display = 'none';
-    uiElements.chatPage.style.display = 'block';
+    UI.connectionPage.style.display = 'none';
+    UI.chatPage.style.display = 'block';
   };
 
   dataChannel.onmessage = (event) => {
     const message = document.createElement('p');
     message.textContent = `Peer: ${event.data}`;
-    uiElements.messagesDiv.appendChild(message);
+    UI.messagesDiv.appendChild(message);
   };
-};
+}
 
-const sendMessage = () => {
-  const message = uiElements.messageInput.value;
+function sendMessage() {
+  const message = UI.messageInput.value;
   if (message && dataChannel.readyState === 'open') {
     dataChannel.send(message);
     const messageElement = document.createElement('p');
     messageElement.textContent = `You: ${message}`;
-    uiElements.messagesDiv.appendChild(messageElement);
-    uiElements.messageInput.value = '';
+    UI.messagesDiv.appendChild(messageElement);
+    UI.messageInput.value = '';
   }
-};
+}
+
+window.addEventListener('load', initializeApp);
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/whisperlink/service-worker.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
-    });
-  }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/whisperlink/service-worker.js')
+      .then((registration) => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  });
+}
