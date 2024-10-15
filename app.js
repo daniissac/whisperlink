@@ -26,13 +26,19 @@ function initializeApp() {
     UI.scanQRButton.addEventListener('click', startQRScanner);
     UI.sendMessageButton.addEventListener('click', sendMessage);
 }
-function generateQRCode(peerId) {
-    QRCode.toCanvas(UI.qrCodeDiv, peerId, { width: 256 }, (error) => {
-        if (error) console.error(error);
-        console.log('QR code generated');
-    });
+function generateQRCode(text) {
+    const canvas = document.getElementById('qrcode');
+    if (canvas && canvas.getContext) {
+        QRCode.render({
+            canvas: canvas,
+            text: text,
+            width: 256,
+            height: 256
+        });
+    } else {
+        console.error('Canvas element not found or doesn\'t support getContext');
+    }
 }
-
 function startQRScanner() {
     UI.qrCodeDiv.style.display = 'none';
     UI.qrVideo.style.display = 'block';
