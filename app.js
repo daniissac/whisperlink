@@ -1,6 +1,5 @@
-let peerConnection;
-let dataChannel;
-let isScanning = false;
+let peer;
+let conn;
 
 const UI = {
     connectionPage: document.getElementById('connection-page'),
@@ -14,52 +13,33 @@ const UI = {
 };
 
 function initializeApp() {
-    UI.scanQRButton.addEventListener('click', toggleQRScanner);
+    peer = new Peer();
+    peer.on('open', (id) => {
+        console.log('My peer ID is: ' + id);
+        generateQRCode(id);
+    });
+    peer.on('connection', (connection) => {
+        conn = connection;
+        setupConnection();
+    });
+
+    UI.scanQRButton.addEventListener('click', startQRScanner);
     UI.sendMessageButton.addEventListener('click', sendMessage);
-    generateQRCode();
 }
-
-async function generateQRCode() {
-    try {
-        const offer = await createOffer();
-        if (!offer) {
-            throw new Error('Failed to create offer');
-        }
-        const qrData = JSON.stringify(offer);
-        const canvas = await QRCode.toCanvas(qrData, { width: 200, height: 200 });
-        UI.qrCodeDiv.innerHTML = '';
-        UI.qrCodeDiv.appendChild(canvas);
-    } catch (error) {
-        console.error('Error generating QR code:', error);
-        UI.qrCodeDiv.textContent = 'Error generating QR code';
-    }
-}
-
-async function createOffer() {
-    try {
-        peerConnection = new RTCPeerConnection();
-        dataChannel = peerConnection.createDataChannel('chat');
-        setupDataChannel();
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        return { type: 'offer', sdp: offer.sdp };
-    } catch (error) {
-        console.error('Error creating offer:', error);
-        return null;
-    }
-}
-
-function toggleQRScanner() {
-    isScanning ? stopQRScanner() : startQRScanner();
+function generateQRCode(peerId) {
+    QRCode.toCanvas(UI.qrCodeDiv, peerId, { width: 256 }, (error) => {
+        if (error) console.error(error);
+        console.log('QR code generated');
+    });
 }
 
 function startQRScanner() {
-    isScanning = true;
     UI.qrCodeDiv.style.display = 'none';
     UI.qrVideo.style.display = 'block';
     UI.scanQRButton.textContent = 'Cancel Scan';
-    
+    UI.scanQRButton.removeEventListener('click', startQRScanner);
+    UI.scanQRButton.addEventListener('click', stopQRScanner);
+
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
         .then(stream => {
             UI.qrVideo.srcObject = stream;
@@ -72,79 +52,63 @@ function startQRScanner() {
         });
 }
 
-function scanQRCode() {
-    if (!isScanning) return;
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    canvas.width = UI.qrVideo.videoWidth;
-    canvas.height = UI.qrVideo.videoHeight;
-    context.drawImage(UI.qrVideo, 0, 0, canvas.width, canvas.height);
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-    if (code) {
-        console.log("Found QR code", code.data);
-        stopQRScanner();
-        handleScannedOffer(JSON.parse(code.data));
-    } else {
-        requestAnimationFrame(scanQRCode);
-    }
-}
-
 function stopQRScanner() {
-    isScanning = false;
     UI.qrCodeDiv.style.display = 'block';
     UI.qrVideo.style.display = 'none';
     UI.scanQRButton.textContent = 'Scan QR Code';
-    
+    UI.scanQRButton.removeEventListener('click', stopQRScanner);
+    UI.scanQRButton.addEventListener('click', startQRScanner);
+
     if (UI.qrVideo.srcObject) {
         UI.qrVideo.srcObject.getTracks().forEach(track => track.stop());
         UI.qrVideo.srcObject = null;
     }
 }
+function scanQRCode() {
+    const canvas = document.createElement('canvas');
+    canvas.width = UI.qrVideo.videoWidth;
+    canvas.height = UI.qrVideo.videoHeight;
+    canvas.getContext('2d').drawImage(UI.qrVideo, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code) {
+        console.log("Found QR code", code.data);
+        connectToPeer(code.data);
+        UI.qrVideo.srcObject.getTracks().forEach(track => track.stop());
+        UI.qrVideo.style.display = 'none';
+    } else {
+        requestAnimationFrame(scanQRCode);
+    }
+}
 
-function setupDataChannel() {
-    dataChannel.onopen = () => {
-        console.log('Data channel is open');
+function connectToPeer(peerId) {
+    conn = peer.connect(peerId);
+    setupConnection();
+}
+
+function setupConnection() {
+    conn.on('open', () => {
+        console.log('Connection established');
         UI.connectionPage.style.display = 'none';
         UI.chatPage.style.display = 'block';
-    };
+    });
 
-    dataChannel.onmessage = event => {
+    conn.on('data', (data) => {
         const message = document.createElement('p');
-        message.textContent = `Peer: ${event.data}`;
+        message.textContent = `Peer: ${data}`;
         UI.messagesDiv.appendChild(message);
-    };
+    });
 }
 
 function sendMessage() {
     const message = UI.messageInput.value;
-    if (message && dataChannel.readyState === 'open') {
-        dataChannel.send(message);
+    if (message && conn && conn.open) {
+        conn.send(message);
         const messageElement = document.createElement('p');
         messageElement.textContent = `You: ${message}`;
         UI.messagesDiv.appendChild(messageElement);
         UI.messageInput.value = '';
-    }
-}
-
-async function handleScannedOffer(offer) {
-    try {
-        peerConnection = new RTCPeerConnection();
-        peerConnection.ondatachannel = event => {
-            dataChannel = event.channel;
-            setupDataChannel();
-        };
-
-        await peerConnection.setRemoteDescription(offer);
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        console.log('Answer created:', answer);
-    } catch (error) {
-        console.error('Error handling scanned offer:', error);
     }
 }
 
