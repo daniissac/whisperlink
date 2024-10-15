@@ -1,30 +1,50 @@
 # WhisperLink
 
-WhisperLink is a peer-to-peer messaging web application that allows users to chat securely without relying on a central server. It uses QR codes for connection initiation and WebRTC for direct communication between devices.
+WhisperLink is a cutting-edge, peer-to-peer messaging web application that enables secure, server-less communication between devices. By leveraging QR codes for connection initiation and WebRTC for direct communication, WhisperLink offers a unique and privacy-focused messaging experience.
 
 ## Features
 
 - Server-less peer-to-peer messaging
-- QR code scanning for easy connection
-- Mobile-friendly design
+- QR code-based connection initiation
+- Real-time, encrypted communication
+- Mobile-friendly responsive design
+- No account or login required
 
-## Usage
+## How It Works
 
 1. Open WhisperLink on two devices.
-2. On one device, a QR code will be generated automatically.
-3. On the other device, click "Scan QR Code" and scan the displayed QR code.
-4. Once connected, you can start messaging securely.
+2. Device A displays a QR code automatically.
+3. On Device B, click "Scan QR Code" and scan Device A's QR code.
+4. Once connected, start messaging securely and privately!
 
-## Running the Application
+## Getting Started
+
+To use WhisperLink, simply visit our GitHub Pages deployment:
+
+[https://daniissac.com/whisperlink/](https://daniissac.com/whisperlink/)
+
+No installation or setup required!
+
+## Local Development
+
+If you want to run WhisperLink locally or contribute to its development:
 
 1. Clone this repository
-2. Open the `index.html` file in a web browser
-   - For local development, you can use a simple HTTP server like `python -m http.server` or `npx http-server`
+2. Open `index.html` in a modern web browser
+3. For local testing, use a simple HTTP server:
+   - Python: `python -m http.server`
+   - Node.js: `npx http-server`
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to WhisperLink! Feel free to fork the repository, make your changes, and submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+WhisperLink is open-source software licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Support
+
+If you encounter any issues or have questions, please open an issue on our GitHub repository.
+
+Happy secure messaging with WhisperLink!
