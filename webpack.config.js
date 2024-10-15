@@ -30,6 +30,7 @@ module.exports = {
                 { from: 'src/manifest.json', to: 'manifest.json' },
                 { from: 'src/.nojekyll', to: '.nojekyll' },
                 { from: 'src/icon.svg', to: 'icon.svg' },
+                { from: 'src/service-worker.js', to: 'service-worker.js' },
             ],
         }),
     ],
