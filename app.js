@@ -65,23 +65,23 @@ function stopQRScanner() {
     }
 }
 function scanQRCode() {
-    const canvas = document.createElement('canvas');
-    canvas.width = UI.qrVideo.videoWidth;
-    canvas.height = UI.qrVideo.videoHeight;
-    canvas.getContext('2d').drawImage(UI.qrVideo, 0, 0, canvas.width, canvas.height);
-    const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-    
-    const code = jsQR(imageData.data, imageData.width, imageData.height);
-    if (code) {
-        console.log("Found QR code", code.data);
-        connectToPeer(code.data);
-        UI.qrVideo.srcObject.getTracks().forEach(track => track.stop());
-        UI.qrVideo.style.display = 'none';
-    } else {
-        requestAnimationFrame(scanQRCode);
+    if (UI.qrVideo.readyState === UI.qrVideo.HAVE_ENOUGH_DATA) {
+        const canvas = document.createElement('canvas');
+        canvas.width = UI.qrVideo.videoWidth;
+        canvas.height = UI.qrVideo.videoHeight;
+        canvas.getContext('2d').drawImage(UI.qrVideo, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+            console.log("Found QR code", code.data);
+            connectToPeer(code.data);
+            UI.qrVideo.srcObject.getTracks().forEach(track => track.stop());
+            UI.qrVideo.style.display = 'none';
+        }
     }
+    requestAnimationFrame(scanQRCode);
 }
-
 function connectToPeer(peerId) {
     conn = peer.connect(peerId);
     setupConnection();
@@ -100,7 +100,6 @@ function setupConnection() {
         UI.messagesDiv.appendChild(message);
     });
 }
-
 function sendMessage() {
     const message = UI.messageInput.value;
     if (message && conn && conn.open) {
