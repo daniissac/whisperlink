@@ -27,7 +27,7 @@ function initializeApp() {
     UI.sendMessageButton.addEventListener('click', sendMessage);
 }
 function generateQRCode(text) {
-    const canvas = document.getElementById('qrcode');
+    const canvas = document.getElementById('qr-canvas');
     if (canvas && canvas.getContext) {
         QRCode.render({
             canvas: canvas,
