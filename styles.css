@@ -20,22 +20,7 @@ body {
 
 h1 {
     text-align: center;
-}
-
-button {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
+    color: #007bff;
 }
 
 #qr-code {
@@ -43,11 +28,9 @@ button:hover {
     margin: 20px 0;
 }
 
-#qr-video {
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-    display: block;
+#qr-code canvas {
+    max-width: 100%;
+    height: auto;
 }
 
 #messages {
@@ -62,4 +45,21 @@ button:hover {
     width: calc(100% - 22px);
     padding: 10px;
     margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+#chat-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#input-area {
+    margin-top: auto;
 }

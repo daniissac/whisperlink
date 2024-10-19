@@ -12,16 +12,15 @@ WhisperLink is a cutting-edge, peer-to-peer messaging web application that enabl
 
 ## How It Works
 
-1. Open WhisperLink on two devices.
-2. Device A displays a QR code automatically.
-3. On Device B, click "Scan QR Code" and scan Device A's QR code.
-4. Once connected, start messaging securely and privately!
+1. Open WhisperLink on your device.
+2. A QR code containing a unique link will be displayed automatically.
+3. Share this QR code or link with the person you want to chat with.
+4. When they open the link, you'll be connected instantly.
+5. Start messaging securely and privately!
 
 ## Getting Started
 
-To use WhisperLink, simply visit our GitHub Pages deployment:
-
-[https://daniissac.com/whisperlink/](https://daniissac.com/whisperlink/)
+To use WhisperLink, simply visit our [GitHub Pages deployment](https://daniissac.com/whisperlink/)
 
 No installation or setup required!
 
