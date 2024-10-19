@@ -35,9 +35,10 @@ function initializeApp() {
 }
 
 function generateQRCode(text) {
-    QRCode.toCanvas(UI.qrCodeDiv, text, { width: 256 }, (error) => {
-        if (error) console.error('Error generating QR code:', error);
-    });
+    const qr = qrcode(0, 'L');
+    qr.addData(text);
+    qr.make();
+    UI.qrCodeDiv.innerHTML = qr.createImgTag(5);
 }
 
 function connectToPeer(peerId) {

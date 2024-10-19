@@ -28,7 +28,7 @@ h1 {
     margin: 20px 0;
 }
 
-#qr-code canvas {
+#qr-code img {
     max-width: 100%;
     height: auto;
 }
