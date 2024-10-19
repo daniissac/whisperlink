@@ -13,9 +13,17 @@ function initializeApp() {
     peer = new Peer();
     peer.on('open', (id) => {
         console.log('My peer ID is: ' + id);
-        const chatLink = `${window.location.href}?peer=${id}`;
-        generateQRCode(chatLink);
+        const urlParams = new URLSearchParams(window.location.search);
+        const peerIdToConnect = urlParams.get('peer');
+        
+        if (peerIdToConnect) {
+            connectToPeer(peerIdToConnect);
+        } else {
+            const chatLink = `${window.location.href}?peer=${id}`;
+            generateQRCode(chatLink);
+        }
     });
+
     peer.on('connection', (connection) => {
         conn = connection;
         setupConnection();
@@ -26,14 +34,7 @@ function initializeApp() {
             sendMessage();
         }
     });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const peerIdToConnect = urlParams.get('peer');
-    if (peerIdToConnect) {
-        connectToPeer(peerIdToConnect);
-    }
 }
-
 function generateQRCode(text) {
     const qr = qrcode(0, 'L');
     qr.addData(text);
@@ -43,9 +44,15 @@ function generateQRCode(text) {
 
 function connectToPeer(peerId) {
     conn = peer.connect(peerId);
-    setupConnection();
+    conn.on('open', () => {
+        console.log('Connected to peer:', peerId);
+        setupConnection();
+    });
+    conn.on('error', (err) => {
+        console.error('Connection error:', err);
+        // Handle connection error (e.g., display an error message to the user)
+    });
 }
-
 function setupConnection() {
     conn.on('open', () => {
         console.log('Connection established');
