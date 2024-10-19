@@ -44,20 +44,13 @@ function generateQRCode(text) {
 
 function connectToPeer(peerId) {
     conn = peer.connect(peerId);
-    conn.on('open', () => {
-        console.log('Connected to peer:', peerId);
-        setupConnection();
-    });
-    conn.on('error', (err) => {
-        console.error('Connection error:', err);
-        // Handle connection error (e.g., display an error message to the user)
-    });
+    setupConnection();
 }
+
 function setupConnection() {
     conn.on('open', () => {
         console.log('Connection established');
-        UI.connectionPage.style.display = 'none';
-        UI.chatPage.style.display = 'block';
+        showChatPage();
     });
 
     conn.on('data', (data) => {
@@ -66,6 +59,12 @@ function setupConnection() {
         UI.messagesDiv.appendChild(message);
     });
 }
+
+function showChatPage() {
+    UI.connectionPage.style.display = 'none';
+    UI.chatPage.style.display = 'block';
+}
+
 
 function sendMessage() {
     const message = UI.messageInput.value;
