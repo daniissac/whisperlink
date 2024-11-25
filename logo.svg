@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle -->
+    <circle cx="256" cy="256" r="248" fill="#4A90E2" stroke="#2C3E50" stroke-width="16"/>
+    
+    <!-- Chat Bubble Left -->
+    <path d="M160 180C160 162.327 174.327 148 192 148H240C257.673 148 272 162.327 272 180V228C272 245.673 257.673 260 240 260H216L188 288V260H192C174.327 260 160 245.673 160 228V180Z" 
+          fill="white" stroke="#2C3E50" stroke-width="12" stroke-linejoin="round"/>
+    
+    <!-- Chat Bubble Right -->
+    <path d="M240 252C240 234.327 254.327 220 272 220H320C337.673 220 352 234.327 352 252V300C352 317.673 337.673 332 320 332H296L268 360V332H272C254.327 332 240 317.673 240 300V252Z" 
+          fill="white" stroke="#2C3E50" stroke-width="12" stroke-linejoin="round"/>
+    
+    <!-- Link Symbol -->
+    <path d="M226 180L286 332" stroke="#2C3E50" stroke-width="24" stroke-linecap="round"/>
+    
+    <!-- Sparkles -->
+    <circle cx="180" cy="200" r="8" fill="#2C3E50"/>
+    <circle cx="332" cy="312" r="8" fill="#2C3E50"/>
+    <circle cx="256" cy="256" r="8" fill="#2C3E50"/>
+</svg>

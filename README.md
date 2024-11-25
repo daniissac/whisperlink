@@ -1,49 +1,99 @@
 # WhisperLink
 
-WhisperLink is a cutting-edge, peer-to-peer messaging web application that enables secure, server-less communication between devices. By leveraging QR codes for connection initiation and WebRTC for direct communication, WhisperLink offers a unique and privacy-focused messaging experience.
+A secure, server-less peer-to-peer web messaging application focused on privacy and direct communication.
+
+![WhisperLink Logo](logo.svg)
 
 ## Features
 
-- Server-less peer-to-peer messaging
-- QR code-based connection initiation
-- Real-time, encrypted communication
-- Mobile-friendly responsive design
-- No account or login required
+### Core Functionality
+- 🔒 Secure peer-to-peer messaging using WebRTC
+- 🌐 No server required - completely decentralized
+- 🔑 No account registration needed
+- 🔗 Easy connection via QR code or share link
 
-## How It Works
+### File Sharing
+- 📁 Support for any file type
+- 🖼️ Image preview and gallery view
+- 📊 Real-time transfer progress indicators
+- ⏸️ Cancel transfer option
+- 📦 Chunked file transfer for large files
+- 🔄 Automatic file type detection
+- 💾 Direct peer-to-peer file transfer
+- 📱 Mobile-responsive file handling
 
-1. Open WhisperLink on your device.
-2. A QR code containing a unique link will be displayed automatically.
-3. Share this QR code or link with the person you want to chat with.
-4. When they open the link, you'll be connected instantly.
-5. Start messaging securely and privately!
+### User Interface
+- 🎨 Modern, clean design
+- 📱 Fully responsive layout
+- 🌓 Custom SVG icons and branding
+- ⚡ Real-time status updates
+- 🔍 File preview before sending
+- 📈 Visual progress tracking
 
-## Getting Started
+### Security
+- 🔐 End-to-end encryption via WebRTC
+- 🚫 No data storage or tracking
+- 📡 Direct peer connections
+- 🔒 No server intermediary
 
-To use WhisperLink, simply visit our [GitHub Pages deployment](https://daniissac.com/whisperlink/)
+## How to Use
 
-No installation or setup required!
+1. **Start a Chat**
+   - Open WhisperLink in your browser
+   - Share the generated QR code or link with your peer
+   - Wait for connection
 
-## Local Development
+2. **Send Messages**
+   - Type your message in the input field
+   - Press Enter or click Send
+   - Messages appear instantly
 
-If you want to run WhisperLink locally or contribute to its development:
+3. **Share Files**
+   - Click the attachment icon or drag & drop files
+   - Preview the file before sending
+   - Monitor transfer progress
+   - Cancel transfer if needed
+   - Files are sent directly to peer
 
-1. Clone this repository
-2. Open `index.html` in a modern web browser
-3. For local testing, use a simple HTTP server:
-   - Python: `python -m http.server`
-   - Node.js: `npx http-server`
+## Technical Details
 
-## Contributing
+### Technologies Used
+- Vanilla JavaScript (No framework dependencies)
+- WebRTC (PeerJS library)
+- QR Code Generation (qrcode-generator)
+- Modern CSS3 Features
+- SVG Icons and Animations
 
-We welcome contributions to WhisperLink! Feel free to fork the repository, make your changes, and submit a pull request.
+### File Transfer Implementation
+- Chunk size: 16KB
+- Progress tracking for both sender and receiver
+- Automatic file type detection
+- Blob handling for file reconstruction
+- URL.createObjectURL for file preview
+- ArrayBuffer for efficient transfer
+
+
+## Roadmap
+
+- [ ] Group chat support
+- [ ] Enhanced encryption indicators
+- [ ] Offline message queueing
+- [ ] Custom emoji support
+- [ ] Screen sharing
+- [ ] Voice/Video chat
+- [ ] File compression
+- [ ] Collaborative features
 
 ## License
 
-WhisperLink is open-source software licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## Acknowledgments
 
-If you encounter any issues or have questions, please open an issue on our GitHub repository.
+- PeerJS team for the WebRTC implementation
+- QR Code Generator library
+- Open source community
 
-Happy secure messaging with WhisperLink!
+---
+
+Made with ❤️ for secure, private communication
