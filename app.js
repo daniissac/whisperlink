@@ -62,11 +62,18 @@ class WhisperLink {
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' }
-                ]
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ],
+                iceCandidatePoolSize: 10
             }
         };
         
@@ -95,6 +102,8 @@ class WhisperLink {
                 errorMessage = 'Network error. Please check your internet connection.';
             } else if (err.type === 'disconnected') {
                 errorMessage = 'Disconnected from server. Please refresh the page.';
+            } else if (err.type === 'webrtc') {
+                errorMessage = 'WebRTC connection failed. Please ensure both devices have proper internet access.';
             }
             this.statusText.textContent = errorMessage;
             this.showConnectionInterface();
@@ -102,7 +111,11 @@ class WhisperLink {
 
         this.peer.on('disconnected', () => {
             this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
-            this.peer.reconnect();
+            setTimeout(() => {
+                if (this.peer.disconnected) {
+                    this.peer.reconnect();
+                }
+            }, 3000);
         });
     }
 
@@ -112,11 +125,18 @@ class WhisperLink {
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' }
-                ]
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ],
+                iceCandidatePoolSize: 10
             }
         };
         
@@ -125,7 +145,10 @@ class WhisperLink {
         this.peer.on('open', () => {
             this.connection = this.peer.connect(peerId, {
                 reliable: true,
-                serialization: 'json'
+                serialization: 'json',
+                metadata: {
+                    type: 'chat'
+                }
             });
             
             if (!this.connection) {
@@ -145,6 +168,8 @@ class WhisperLink {
                 errorMessage = 'Network error. Please check your internet connection.';
             } else if (err.type === 'disconnected') {
                 errorMessage = 'Disconnected from server. Please refresh the page.';
+            } else if (err.type === 'webrtc') {
+                errorMessage = 'WebRTC connection failed. Please ensure both devices have proper internet access.';
             }
             this.statusText.textContent = errorMessage;
             this.showConnectionInterface();
@@ -152,7 +177,11 @@ class WhisperLink {
 
         this.peer.on('disconnected', () => {
             this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
-            this.peer.reconnect();
+            setTimeout(() => {
+                if (this.peer.disconnected) {
+                    this.peer.reconnect();
+                }
+            }, 3000);
         });
     }
 
