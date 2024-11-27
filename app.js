@@ -5,6 +5,8 @@ class WhisperLink {
         this.isInitiator = false;
         this.selectedFile = null;
         this.activeTransfers = new Map();
+        this.isConnectionReady = false;  
+        this.messageQueue = [];          
         this.setupUI();
         this.initialize();
     }
@@ -194,17 +196,26 @@ class WhisperLink {
         }
 
         this.connection.on('open', () => {
+            this.isConnectionReady = true;  
             this.statusText.textContent = 'Connected!';
             this.showChatInterface();
+            
+            // Send any queued messages
+            while (this.messageQueue.length > 0) {
+                const message = this.messageQueue.shift();
+                this.connection.send(message);
+            }
         });
 
         this.connection.on('error', (err) => {
             console.error('Connection error:', err);
+            this.isConnectionReady = false;  
             this.statusText.textContent = 'Connection error. Please refresh and try again.';
             this.showConnectionInterface();
         });
 
         this.connection.on('close', () => {
+            this.isConnectionReady = false;  
             this.statusText.textContent = 'Connection closed. Please refresh to start a new chat.';
             this.showConnectionInterface();
         });
@@ -246,7 +257,17 @@ class WhisperLink {
     }
 
     async sendFile() {
-        if (!this.selectedFile || !this.connection) return;
+        if (!this.selectedFile) return;
+        
+        if (!this.connection) {
+            this.statusText.textContent = 'No connection available. Please try again.';
+            return;
+        }
+
+        if (!this.isConnectionReady) {
+            this.statusText.textContent = 'Connection not ready. Please wait...';
+            return;
+        }
 
         const file = this.selectedFile;
         const chunkSize = 16384; // 16KB chunks
@@ -481,10 +502,28 @@ class WhisperLink {
             await this.sendFile();
         } else {
             const message = this.messageInput.value.trim();
-            if (message && this.connection) {
-                this.connection.send({ type: 'text', content: message });
-                this.displayMessage({ type: 'text', content: message }, true);
-                this.messageInput.value = '';
+            if (message) {
+                if (!this.connection) {
+                    this.statusText.textContent = 'No connection available. Please try again.';
+                    return;
+                }
+
+                const messageData = { type: 'text', content: message };
+
+                if (this.isConnectionReady) {
+                    try {
+                        this.connection.send(messageData);
+                        this.displayMessage(messageData, true);
+                        this.messageInput.value = '';
+                    } catch (err) {
+                        console.error('Failed to send message:', err);
+                        this.statusText.textContent = 'Failed to send message. Please try again.';
+                    }
+                } else {
+                    // Queue the message if connection isn't ready
+                    this.messageQueue.push(messageData);
+                    this.statusText.textContent = 'Message queued. Waiting for connection...';
+                }
             }
         }
     }
