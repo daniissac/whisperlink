@@ -57,7 +57,20 @@ class WhisperLink {
     }
 
     async createNewChat() {
-        this.peer = new Peer(this.generatePeerId());
+        const peerConfig = {
+            debug: 2,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ]
+            }
+        };
+        
+        this.peer = new Peer(this.generatePeerId(), peerConfig);
         
         this.peer.on('open', (id) => {
             const shareUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
@@ -75,28 +88,96 @@ class WhisperLink {
 
         this.peer.on('error', (err) => {
             console.error('Peer error:', err);
-            this.statusText.textContent = 'Connection error. Please try again.';
+            let errorMessage = 'Connection error. Please try again.';
+            if (err.type === 'peer-unavailable') {
+                errorMessage = 'The other device is not available. Please make sure they are online.';
+            } else if (err.type === 'network') {
+                errorMessage = 'Network error. Please check your internet connection.';
+            } else if (err.type === 'disconnected') {
+                errorMessage = 'Disconnected from server. Please refresh the page.';
+            }
+            this.statusText.textContent = errorMessage;
+            this.showConnectionInterface();
+        });
+
+        this.peer.on('disconnected', () => {
+            this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
+            this.peer.reconnect();
         });
     }
 
     async joinChat(peerId) {
-        this.peer = new Peer();
+        const peerConfig = {
+            debug: 2,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ]
+            }
+        };
+        
+        this.peer = new Peer(undefined, peerConfig);
         
         this.peer.on('open', () => {
-            this.connection = this.peer.connect(peerId);
+            this.connection = this.peer.connect(peerId, {
+                reliable: true,
+                serialization: 'json'
+            });
+            
+            if (!this.connection) {
+                this.statusText.textContent = 'Failed to connect. Please try again.';
+                return;
+            }
+            
             this.setupConnectionHandlers();
         });
 
         this.peer.on('error', (err) => {
             console.error('Peer error:', err);
-            this.statusText.textContent = 'Connection error. Please try again.';
+            let errorMessage = 'Connection error. Please try again.';
+            if (err.type === 'peer-unavailable') {
+                errorMessage = 'The other device is not available. Please make sure they are online.';
+            } else if (err.type === 'network') {
+                errorMessage = 'Network error. Please check your internet connection.';
+            } else if (err.type === 'disconnected') {
+                errorMessage = 'Disconnected from server. Please refresh the page.';
+            }
+            this.statusText.textContent = errorMessage;
+            this.showConnectionInterface();
+        });
+
+        this.peer.on('disconnected', () => {
+            this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
+            this.peer.reconnect();
         });
     }
 
     setupConnectionHandlers() {
+        if (!this.connection) {
+            console.error('No connection available');
+            this.statusText.textContent = 'Connection failed. Please try again.';
+            this.showConnectionInterface();
+            return;
+        }
+
         this.connection.on('open', () => {
             this.statusText.textContent = 'Connected!';
             this.showChatInterface();
+        });
+
+        this.connection.on('error', (err) => {
+            console.error('Connection error:', err);
+            this.statusText.textContent = 'Connection error. Please refresh and try again.';
+            this.showConnectionInterface();
+        });
+
+        this.connection.on('close', () => {
+            this.statusText.textContent = 'Connection closed. Please refresh to start a new chat.';
+            this.showConnectionInterface();
         });
 
         this.connection.on('data', (data) => {
@@ -109,11 +190,6 @@ class WhisperLink {
             } else if (data.type === 'text') {
                 this.displayMessage(data, false);
             }
-        });
-
-        this.connection.on('close', () => {
-            this.statusText.textContent = 'Connection closed';
-            this.showConnectionInterface();
         });
     }
 
