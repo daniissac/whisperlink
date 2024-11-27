@@ -60,131 +60,198 @@ class WhisperLink {
 
     async createNewChat() {
         const peerConfig = {
-            debug: 2,
+            debug: 3,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
                     {
-                        urls: 'turn:openrelay.metered.ca:80',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
-                    },
-                    {
-                        urls: 'turn:openrelay.metered.ca:443',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
+                        urls: [
+                            'turn:a.relay.metered.ca:80',
+                            'turn:a.relay.metered.ca:80?transport=tcp',
+                            'turn:a.relay.metered.ca:443',
+                            'turn:a.relay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'e8e146a66b70f05c36687e29',
+                        credential: 'L5l3HXOXMNWxhMt+'
                     }
                 ],
-                iceCandidatePoolSize: 10
+                iceCandidatePoolSize: 10,
+                iceTransportPolicy: 'all'
             }
         };
         
-        this.peer = new Peer(this.generatePeerId(), peerConfig);
-        
-        this.peer.on('open', (id) => {
-            const shareUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
-            this.shareUrl.value = shareUrl;
-            this.generateQRCode(shareUrl);
-            this.statusText.textContent = 'Waiting for someone to join...';
-        });
+        try {
+            this.peer = new Peer(this.generatePeerId(), peerConfig);
+            
+            this.peer.on('open', (id) => {
+                console.log('Peer opened with ID:', id);
+                const shareUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
+                this.shareUrl.value = shareUrl;
+                this.generateQRCode(shareUrl);
+                this.statusText.textContent = 'Waiting for someone to join...';
+            });
 
-        this.peer.on('connection', (conn) => {
-            this.connection = conn;
-            this.setupConnectionHandlers();
-            this.statusText.textContent = 'Connected!';
-            this.showChatInterface();
-        });
+            this.peer.on('connection', (conn) => {
+                console.log('Incoming connection from peer');
+                this.connection = conn;
+                this.setupConnectionHandlers();
+                this.statusText.textContent = 'Connected!';
+                this.showChatInterface();
+            });
 
-        this.peer.on('error', (err) => {
-            console.error('Peer error:', err);
-            let errorMessage = 'Connection error. Please try again.';
-            if (err.type === 'peer-unavailable') {
-                errorMessage = 'The other device is not available. Please make sure they are online.';
-            } else if (err.type === 'network') {
-                errorMessage = 'Network error. Please check your internet connection.';
-            } else if (err.type === 'disconnected') {
-                errorMessage = 'Disconnected from server. Please refresh the page.';
-            } else if (err.type === 'webrtc') {
-                errorMessage = 'WebRTC connection failed. Please ensure both devices have proper internet access.';
-            }
-            this.statusText.textContent = errorMessage;
-            this.showConnectionInterface();
-        });
-
-        this.peer.on('disconnected', () => {
-            this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
-            setTimeout(() => {
-                if (this.peer.disconnected) {
-                    this.peer.reconnect();
+            this.peer.on('error', (err) => {
+                console.error('Peer error details:', {
+                    type: err.type,
+                    message: err.message,
+                    stack: err.stack
+                });
+                
+                let errorMessage = 'Connection error. Please try again.';
+                if (err.type === 'peer-unavailable') {
+                    errorMessage = 'The other device is not available. Please make sure they are online.';
+                } else if (err.type === 'network') {
+                    errorMessage = 'Network error. Please check your internet connection.';
+                } else if (err.type === 'disconnected') {
+                    errorMessage = 'Disconnected from server. Please refresh the page.';
+                } else if (err.type === 'webrtc') {
+                    errorMessage = 'WebRTC connection failed. Retrying with alternative servers...';
+                    this.retryWithAlternativeServers();
                 }
-            }, 3000);
-        });
+                this.statusText.textContent = errorMessage;
+                this.showConnectionInterface();
+            });
+
+            this.peer.on('disconnected', () => {
+                console.log('Peer disconnected, attempting to reconnect...');
+                this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
+                setTimeout(() => {
+                    if (this.peer.disconnected) {
+                        this.peer.reconnect();
+                    }
+                }, 3000);
+            });
+        } catch (err) {
+            console.error('Failed to create peer:', err);
+            this.statusText.textContent = 'Failed to initialize connection. Please refresh the page.';
+        }
+    }
+
+    async retryWithAlternativeServers() {
+        const altConfig = {
+            debug: 3,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    {
+                        urls: [
+                            'turn:a.relay.metered.ca:80',
+                            'turn:a.relay.metered.ca:80?transport=tcp',
+                            'turn:a.relay.metered.ca:443',
+                            'turn:a.relay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'e8e146a66b70f05c36687e29',
+                        credential: 'L5l3HXOXMNWxhMt+'
+                    }
+                ],
+                iceTransportPolicy: 'all',
+                iceCandidatePoolSize: 10
+            }
+        };
+
+        try {
+            if (this.peer) {
+                this.peer.destroy();
+            }
+            this.peer = new Peer(this.generatePeerId(), altConfig);
+            console.log('Retrying with alternative servers...');
+        } catch (err) {
+            console.error('Retry with alternative servers failed:', err);
+            this.statusText.textContent = 'Connection failed. Please check your network and try again.';
+        }
     }
 
     async joinChat(peerId) {
         const peerConfig = {
-            debug: 2,
+            debug: 3,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
                     {
-                        urls: 'turn:openrelay.metered.ca:80',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
-                    },
-                    {
-                        urls: 'turn:openrelay.metered.ca:443',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
+                        urls: [
+                            'turn:a.relay.metered.ca:80',
+                            'turn:a.relay.metered.ca:80?transport=tcp',
+                            'turn:a.relay.metered.ca:443',
+                            'turn:a.relay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'e8e146a66b70f05c36687e29',
+                        credential: 'L5l3HXOXMNWxhMt+'
                     }
                 ],
-                iceCandidatePoolSize: 10
+                iceCandidatePoolSize: 10,
+                iceTransportPolicy: 'all'
             }
         };
         
-        this.peer = new Peer(undefined, peerConfig);
-        
-        this.peer.on('open', () => {
-            this.connection = this.peer.connect(peerId, {
-                reliable: true,
-                serialization: 'json',
-                metadata: {
-                    type: 'chat'
+        try {
+            this.peer = new Peer(undefined, peerConfig);
+            
+            this.peer.on('open', () => {
+                console.log('Peer opened, attempting to connect to:', peerId);
+                this.connection = this.peer.connect(peerId, {
+                    reliable: true,
+                    serialization: 'json',
+                    metadata: {
+                        type: 'chat',
+                        timestamp: Date.now()
+                    }
+                });
+                
+                if (!this.connection) {
+                    this.statusText.textContent = 'Failed to connect. Please try again.';
+                    return;
                 }
+                
+                this.setupConnectionHandlers();
             });
-            
-            if (!this.connection) {
-                this.statusText.textContent = 'Failed to connect. Please try again.';
-                return;
-            }
-            
-            this.setupConnectionHandlers();
-        });
 
-        this.peer.on('error', (err) => {
-            console.error('Peer error:', err);
-            let errorMessage = 'Connection error. Please try again.';
-            if (err.type === 'peer-unavailable') {
-                errorMessage = 'The other device is not available. Please make sure they are online.';
-            } else if (err.type === 'network') {
-                errorMessage = 'Network error. Please check your internet connection.';
-            } else if (err.type === 'disconnected') {
-                errorMessage = 'Disconnected from server. Please refresh the page.';
-            } else if (err.type === 'webrtc') {
-                errorMessage = 'WebRTC connection failed. Please ensure both devices have proper internet access.';
-            }
-            this.statusText.textContent = errorMessage;
-            this.showConnectionInterface();
-        });
-
-        this.peer.on('disconnected', () => {
-            this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
-            setTimeout(() => {
-                if (this.peer.disconnected) {
-                    this.peer.reconnect();
+            this.peer.on('error', (err) => {
+                console.error('Peer error details:', {
+                    type: err.type,
+                    message: err.message,
+                    stack: err.stack
+                });
+                
+                let errorMessage = 'Connection error. Please try again.';
+                if (err.type === 'peer-unavailable') {
+                    errorMessage = 'The other device is not available. Please make sure they are online.';
+                } else if (err.type === 'network') {
+                    errorMessage = 'Network error. Please check your internet connection.';
+                } else if (err.type === 'disconnected') {
+                    errorMessage = 'Disconnected from server. Please refresh the page.';
+                } else if (err.type === 'webrtc') {
+                    errorMessage = 'WebRTC connection failed. Retrying with alternative servers...';
+                    this.retryWithAlternativeServers();
                 }
-            }, 3000);
-        });
+                this.statusText.textContent = errorMessage;
+                this.showConnectionInterface();
+            });
+
+            this.peer.on('disconnected', () => {
+                console.log('Peer disconnected, attempting to reconnect...');
+                this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
+                setTimeout(() => {
+                    if (this.peer.disconnected) {
+                        this.peer.reconnect();
+                    }
+                }, 3000);
+            });
+        } catch (err) {
+            console.error('Failed to create peer:', err);
+            this.statusText.textContent = 'Failed to initialize connection. Please refresh the page.';
+        }
     }
 
     setupConnectionHandlers() {
