@@ -65,6 +65,8 @@ class WhisperLink {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
                     {
                         urls: [
                             'turn:a.relay.metered.ca:80',
@@ -77,7 +79,19 @@ class WhisperLink {
                     }
                 ],
                 iceCandidatePoolSize: 10,
-                iceTransportPolicy: 'all'
+                iceTransportPolicy: 'all',
+                sdpSemantics: 'unified-plan',
+                iceServers: [
+                    {
+                        urls: [
+                            'turn:openrelay.metered.ca:80',
+                            'turn:openrelay.metered.ca:443',
+                            'turn:openrelay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ]
             }
         };
         
@@ -96,6 +110,20 @@ class WhisperLink {
                 console.log('Incoming connection from peer');
                 this.connection = conn;
                 this.setupConnectionHandlers();
+                
+                // Monitor connection state changes
+                if (conn.peerConnection) {
+                    conn.peerConnection.oniceconnectionstatechange = () => {
+                        console.log('ICE Connection State:', conn.peerConnection.iceConnectionState);
+                        this.handleIceConnectionStateChange(conn.peerConnection.iceConnectionState);
+                    };
+                    
+                    conn.peerConnection.onconnectionstatechange = () => {
+                        console.log('Connection State:', conn.peerConnection.connectionState);
+                        this.handleConnectionStateChange(conn.peerConnection.connectionState);
+                    };
+                }
+                
                 this.statusText.textContent = 'Connected!';
                 this.showChatInterface();
             });
@@ -113,23 +141,19 @@ class WhisperLink {
                 } else if (err.type === 'network') {
                     errorMessage = 'Network error. Please check your internet connection.';
                 } else if (err.type === 'disconnected') {
-                    errorMessage = 'Disconnected from server. Please refresh the page.';
+                    errorMessage = 'Disconnected from server. Attempting to reconnect...';
+                    this.attemptReconnection();
                 } else if (err.type === 'webrtc') {
                     errorMessage = 'WebRTC connection failed. Retrying with alternative servers...';
                     this.retryWithAlternativeServers();
                 }
                 this.statusText.textContent = errorMessage;
-                this.showConnectionInterface();
             });
 
             this.peer.on('disconnected', () => {
                 console.log('Peer disconnected, attempting to reconnect...');
                 this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
-                setTimeout(() => {
-                    if (this.peer.disconnected) {
-                        this.peer.reconnect();
-                    }
-                }, 3000);
+                this.attemptReconnection();
             });
         } catch (err) {
             console.error('Failed to create peer:', err);
@@ -703,6 +727,71 @@ class WhisperLink {
         this.uploadProgress.classList.add('hidden');
         this.uploadProgress.querySelector('.progress-fill').style.width = '0';
         this.uploadProgress.querySelector('.progress-text').textContent = '0%';
+    }
+
+    handleIceConnectionStateChange(state) {
+        console.log('ICE Connection State Change:', state);
+        switch (state) {
+            case 'checking':
+                this.statusText.textContent = 'Establishing connection...';
+                break;
+            case 'connected':
+                this.statusText.textContent = 'Connected!';
+                break;
+            case 'completed':
+                this.statusText.textContent = 'Connection established!';
+                break;
+            case 'disconnected':
+                this.statusText.textContent = 'Connection interrupted. Attempting to restore...';
+                this.attemptReconnection();
+                break;
+            case 'failed':
+                this.statusText.textContent = 'Connection failed. Trying alternative servers...';
+                this.retryWithAlternativeServers();
+                break;
+            case 'closed':
+                this.statusText.textContent = 'Connection closed.';
+                this.showConnectionInterface();
+                break;
+        }
+    }
+
+    handleConnectionStateChange(state) {
+        console.log('Connection State Change:', state);
+        switch (state) {
+            case 'connecting':
+                this.statusText.textContent = 'Establishing connection...';
+                break;
+            case 'connected':
+                this.statusText.textContent = 'Connected!';
+                break;
+            case 'disconnected':
+                this.statusText.textContent = 'Connection lost. Attempting to reconnect...';
+                this.attemptReconnection();
+                break;
+            case 'failed':
+                this.statusText.textContent = 'Connection failed. Please try again.';
+                this.showConnectionInterface();
+                break;
+            case 'closed':
+                this.statusText.textContent = 'Connection closed.';
+                this.showConnectionInterface();
+                break;
+        }
+    }
+
+    async attemptReconnection() {
+        console.log('Attempting reconnection...');
+        if (this.peer && this.peer.disconnected) {
+            try {
+                await this.peer.reconnect();
+                console.log('Reconnection attempt initiated');
+            } catch (err) {
+                console.error('Reconnection failed:', err);
+                this.statusText.textContent = 'Reconnection failed. Please refresh the page.';
+                this.showConnectionInterface();
+            }
+        }
     }
 }
 
